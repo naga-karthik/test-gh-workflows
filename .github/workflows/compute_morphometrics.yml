@@ -54,9 +54,10 @@ jobs:
           CWD=$(pwd)/contrast-agnostic-softseg-spinalcord
           cd $CWD
           echo "$CWD"
+          ls $CWD
           # run script
-          chmod +x scripts/compute_morphometrics_spine_generic.sh
-          source compute_morphometrics_spine_generic.sh
+          chmod +x $CWD/scripts/compute_morphometrics_spine_generic.sh
+          source $CWD/compute_morphometrics_spine_generic.sh
       
       # - name: Run model script
       #   run: ./scripts/run_model.sh
