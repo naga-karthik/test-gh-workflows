@@ -53,11 +53,11 @@ jobs:
           # change current working directory
           CWD=$(pwd)/contrast-agnostic-softseg-spinalcord
           cd $CWD
-          echo "$CWD"
-          ls $CWD/scripts
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
           # run script
-          chmod +x $CWD/scripts/compute_morphometrics_spine_generic.sh
-          source $CWD/compute_morphometrics_spine_generic.sh
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh
       
       # - name: Run model script
       #   run: ./scripts/run_model.sh
