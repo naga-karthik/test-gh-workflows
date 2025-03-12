@@ -50,9 +50,12 @@ jobs:
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
         run: |
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
-          echo "$(pwd)"
-          chmod +x $(pwd)/scripts/compute_morphometrics_spine_generic.sh
-          source $(pwd)/compute_morphometrics_spine_generic.sh
+          # change current working directory
+          CWD=$(pwd)/contrast-agnostic-softseg-spinalcord
+          cd $CWD
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source compute_morphometrics_spine_generic.sh
       
       # - name: Run model script
       #   run: ./scripts/run_model.sh
