@@ -68,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: csa-results
-          path: ${PWD}/contrast-agnostic-softseg-spinalcord/logs_results
+          path: contrast-agnostic-softseg-spinalcord/logs_results
 
       
       # - name: Run model script
