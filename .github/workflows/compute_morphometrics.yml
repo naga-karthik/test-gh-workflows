@@ -38,10 +38,8 @@ jobs:
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      - name: Check SCT dependencies and install contrast-agnostic model
-        run: |
-          sct_check_dependencies
-          sct_deepseg -install seg_sc_contrast_agnostic
+      - name: Check SCT dependencies
+        run: sct_check_dependencies
 
       - name: Install git-annex
         uses: jstritch/setup-git-annex@v1
