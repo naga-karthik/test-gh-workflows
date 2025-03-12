@@ -53,6 +53,7 @@ jobs:
           # change current working directory
           CWD=$(pwd)/contrast-agnostic-softseg-spinalcord
           cd $CWD
+          echo "$CWD"
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
           source compute_morphometrics_spine_generic.sh
