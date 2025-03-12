@@ -60,7 +60,10 @@ jobs:
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
           source scripts/compute_morphometrics_spine_generic.sh
-      
+
+      - name: Check contents of CWD
+        run: ls ${PWD}/contrast-agnostic-softseg-spinalcord
+
       - name: Upload batch processing results
         uses: actions/upload-artifact@v4
         with:
