@@ -18,12 +18,11 @@ jobs:
       - name: Install Python 3
         uses: actions/setup-python@v4
         with:
-          # python-version: 3.9.16
-          python-version: 3.8.18
+          python-version: 3.9.16
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
+      # - name: Install dependencies
+      #   run: |
+      #     python -m pip install --upgrade pip
 
       # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
       - name: Install SCT
@@ -38,10 +37,14 @@ jobs:
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      # - name: Set up Python
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: '3.9.16'
+      - name: Install git-annex
+        uses: jstritch/setup-git-annex@v1
+      
+      - name: Ensure git-annex runs
+        run: | 
+          which git-annex
+          git-annex version
+          git annex help
   
       # - name: Install dependencies
       #   run: |
