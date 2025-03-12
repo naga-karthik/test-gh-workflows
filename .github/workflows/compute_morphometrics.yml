@@ -1,4 +1,5 @@
-name: Test SCT Installation
+name: Compute morphometrics on spine-generic
+
 
 on:
   push:
@@ -8,7 +9,7 @@ on:
   #   types: [published]
 
 jobs:
-  run_dataset_download:
+  compute_morphometrics:
     runs-on: ubuntu-latest
 
     steps:
@@ -39,34 +40,19 @@ jobs:
 
       - name: Install git-annex
         uses: jstritch/setup-git-annex@v1
-      
-      - name: Ensure git-annex runs
-        run: | 
-          which git-annex
-          git-annex version
-          git annex help
-  
-      # - name: Install dependencies
-      #   run: |
-      #     conda install -y git-annex
-
-      # - name: Ensure git-annex is accessible via git
-      #   run: |
-      #     echo "$(conda info --base)/bin" >> $GITHUB_PATH
-      #     export PATH="$(conda info --base)/bin:$PATH"
-      #     which git-annex
-      #     git-annex version
-
-      - name: Configure Git identity
+        
+      - name: Configure git
         run: |
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
 
-      # - name: Run dataset setup script
-      #   shell: bash -l {0}  # Ensures the Conda environment is properly loaded
-      #   run: |
-      #       chmod +x scripts/compute_morphometrics_spine_generic.sh
-      #       source scripts/compute_morphometrics_spine_generic.sh
-
+      - name: Run dataset setup script
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          PATH_REPO=${PWD}
+          chmod +x ${PATH_REPO}/scripts/compute_morphometrics_spine_generic.sh
+          source ${PATH_REPO}/compute_morphometrics_spine_generic.sh
+      
       # - name: Run model script
       #   run: ./scripts/run_model.sh
