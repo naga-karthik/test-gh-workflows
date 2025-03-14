@@ -43,7 +43,7 @@ jobs:
       - name: Cache dataset
         uses: actions/cache@v4
         with:
-          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          path: ~/.cache/data-multi-subject
           key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
           restore-keys: |
             ${{ runner.os }}-data-multi-subject-
@@ -118,8 +118,6 @@ jobs:
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
         run: |
-          # print the contents of the current working directory
-          mv contrast-agnostic-softseg-spinalcord csa-analysis
           # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
@@ -127,7 +125,9 @@ jobs:
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
           # move dataset inside the repo
-          cp -r ../csa-analysis .
+          mkdir -p csa-analysis
+          mv ~/.cache/data-multi-subject/ csa-analysis
+          tree . -L 2
           # define list of 4 subjects
           subjects=("sub-barcelona06" "sub-beijingPrisma01" "sub-beijingPrisma02" "sub-brnoCeitec04")
           # run script
@@ -201,6 +201,12 @@ jobs:
           name: csa-results-batch-2
           path: contrast-agnostic-softseg-spinalcord/logs_results
 
+  # download_results:
+  #   runs-on: ubuntu-latest
+  #   needs: [compute_csa_batch_1, compute_csa_batch_2]
+
+  #   steps:
+  #     -name: Download all artifacts
   # compute_csa_batch_3:
   #   runs-on: ubuntu-latest
   #   needs: download_dataset
