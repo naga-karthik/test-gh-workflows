@@ -21,37 +21,36 @@ jobs:
         with:
           python-version: 3.9.16
 
-      - name: Install git-annex
-        uses: jstritch/setup-git-annex@v1
+      # - name: Install git-annex
+      #   uses: jstritch/setup-git-annex@v1
           
-      - name: Configure git
-        run: |
-            git config --global user.email "actions@github.com"
-            git config --global user.name "GitHub Actions"
+      # - name: Configure git
+      #   run: |
+      #       git config --global user.email "actions@github.com"
+      #       git config --global user.name "GitHub Actions"
 
-      - name: Download test data
-        run: |
-            git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
-            # change current working directory
-            cd ${PWD}/contrast-agnostic-softseg-spinalcord
-            # checkout to the branch
-            git checkout nk/add-post-training-script-to-compute-csa
-            # run script
-            chmod +x scripts/download_spine_generic_test_data.sh
-            source scripts/download_spine_generic_test_data.sh
+      # - name: Download test data
+      #   run: |
+      #       git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+      #       # change current working directory
+      #       cd ${PWD}/contrast-agnostic-softseg-spinalcord
+      #       # checkout to the branch
+      #       git checkout nk/add-post-training-script-to-compute-csa
+      #       # run script
+      #       chmod +x scripts/download_spine_generic_test_data.sh
+      #       source scripts/download_spine_generic_test_data.sh
 
-      - name: Cache dataset
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/data-multi-subject
-          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-data-multi-subject-
+      # - name: Cache dataset
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+      #     key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-data-multi-subject-
 
       # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
       - name: Install SCT
         run: |
-          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
           git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
           cd spinalcordtoolbox
           ./.ci.sh -i
@@ -64,7 +63,7 @@ jobs:
       - name: Cache SCT installation
         uses: actions/cache@v4
         with:
-          path: ~/.cache/spinalcordtoolbox
+          path: contrast-agnostic-softseg-spinalcord/spinalcordtoolbox
           key: ${{ runner.os }}-sct-${{ hashFiles('spinalcordtoolbox/.ci.sh') }}
           restore-keys: |
             ${{ runner.os }}-sct-
@@ -99,13 +98,13 @@ jobs:
       # - name: Check SCT dependencies
       #   run: sct_check_dependencies
 
-      - name: Restore cached dataset
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/data-multi-subject
-          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
-          restore-keys: |
-            ${{ runner.os }}-data-multi-subject-
+      # - name: Restore cached dataset
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+      #     key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-data-multi-subject-
 
       # - name: Restore cached SCT installation
       #   uses: actions/cache@v4
@@ -118,6 +117,8 @@ jobs:
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
         run: |
+          # temporarily rename the repo to output folder for cloning
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
           # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
@@ -125,9 +126,7 @@ jobs:
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
           # move dataset inside the repo
-          mkdir -p csa-analysis
-          mv ~/.cache/data-multi-subject/ csa-analysis
-          tree . -L 2
+          cp -r ../csa-analysis .
           # define list of 4 subjects
           subjects=("sub-barcelona06" "sub-beijingPrisma01" "sub-beijingPrisma02" "sub-brnoCeitec04")
           # run script
