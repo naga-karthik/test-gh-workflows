@@ -89,8 +89,8 @@ jobs:
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
         run: |
           # print the contents of the current working directory
-          tree contrast-agnostic-softseg-spinalcord -L 2
           mv contrast-agnostic-softseg-spinalcord data
+          ls -la
           # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
