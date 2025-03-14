@@ -83,7 +83,7 @@ jobs:
           path: contrast-agnostic-softseg-spinalcord/data-multi-subject
           key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
           restore-keys: |
-            ${{ runner.os }}-data-multi-subject-        
+            ${{ runner.os }}-data-multi-subject-
       
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
@@ -100,11 +100,9 @@ jobs:
           cp -r ../csa-analysis .
           # define list of 4 subjects
           subjects=("sub-barcelona06" "sub-beijingPrisma01" "sub-beijingPrisma02" "sub-brnoCeitec04")
-          # print the contents of the current working directory
-          ls -la
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
-          source scripts/compute_morphometrics_spine_generic.sh "${subjects[@]}"
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
 
       - name: Upload batch processing results
         uses: actions/upload-artifact@v4
@@ -141,6 +139,14 @@ jobs:
       # - name: Check SCT dependencies
       #   run: sct_check_dependencies
 
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
         run: |
@@ -157,7 +163,7 @@ jobs:
           subjects=("sub-brnoUhb01" "sub-cardiff03" "sub-cmrra02" "sub-cmrra05")
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
-          source scripts/compute_morphometrics_spine_generic.sh "${subjects[@]}"
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
 
       - name: Upload batch processing results
         uses: actions/upload-artifact@v4
