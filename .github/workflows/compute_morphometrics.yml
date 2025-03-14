@@ -89,12 +89,16 @@ jobs:
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
         run: |
           # print the contents of the current working directory
-          ls -la
+          tree contrast-agnostic-softseg-spinalcord -L 2
+          mv contrast-agnostic-softseg-spinalcord data
+          # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
           cd ${PWD}/contrast-agnostic-softseg-spinalcord
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
+          # move contents of data folder inside the repo
+          mv data/* contrast-agnostic-softseg-spinalcord
           # define list of 4 subjects
           subjects=("sub-barcelona06" "sub-beijingPrisma01" "sub-beijingPrisma02" "sub-brnoCeitec04")
           # print the contents of the current working directory
