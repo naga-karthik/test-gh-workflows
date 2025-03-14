@@ -207,17 +207,35 @@ jobs:
     needs: [compute_csa_batch_1, compute_csa_batch_2]
 
     steps:
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas argparse
+      
       - name: Download batch processing results
         uses: actions/download-artifact@v4
-        with:
-          # download them to the same directory
-          merge-multiple: true
+          # with:
+          #   # download them to the same directory
+          #   merge-multiple: true
       
-      - name: Show downloaded contents
+      - name: Merge batch processing results
         run: |
-          tree . -L 2
-          ls -R .
-
+          ls -la
+          mkdir batch_csa_results
+          mv csa-batch-* batch_csa_results
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # run script to merge individual csvs
+          python scripts/merge_csvs.py -path-results ../batch_csa_results -path-output .
 
   #   steps:
   #     -name: Download all artifacts
