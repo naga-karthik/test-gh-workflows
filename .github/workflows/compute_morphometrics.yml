@@ -202,9 +202,22 @@ jobs:
           name: csa-results-batch-2
           path: contrast-agnostic-softseg-spinalcord/logs_results
 
-  # download_results:
-  #   runs-on: ubuntu-latest
-  #   needs: [compute_csa_batch_1, compute_csa_batch_2]
+  download_results:
+    runs-on: ubuntu-latest
+    needs: [compute_csa_batch_1, compute_csa_batch_2]
+
+    steps:
+      - name: Download batch processing results
+        uses: actions/download-artifact@v4
+        with:
+          # download them to the same directory
+          merge-multiple: true
+      
+      - name: Show downloaded contents
+        run: |
+          tree . -L 2
+          ls -R .
+
 
   #   steps:
   #     -name: Download all artifacts
