@@ -227,7 +227,7 @@ jobs:
         run: |
           ls -la
           mkdir batch_csa_results
-          mv csa-batch-* batch_csa_results
+          mv csa-results-* batch_csa_results
           # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
@@ -236,6 +236,12 @@ jobs:
           git checkout nk/add-post-training-script-to-compute-csa
           # run script to merge individual csvs
           python scripts/merge_csvs.py -path-results ../batch_csa_results -path-output .
+
+      - name: Upload merged CSV
+        uses: actions/upload-artifact@v4
+        with:
+            name: csa-results-merged
+            path: contrast-agnostic-softseg-spinalcord/csa_c2c3_merged.csv
 
   #   steps:
   #     -name: Download all artifacts
