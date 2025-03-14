@@ -65,7 +65,7 @@ jobs:
       - name: Cache SCT installation
         uses: actions/cache@v4
         with:
-          path: contrast-agnostic-softseg-spinalcord/spinalcordtoolbox
+          path: spinalcordtoolbox
           key: ${{ runner.os }}-sct-${{ hashFiles('spinalcordtoolbox/.ci.sh') }}
           restore-keys: |
             ${{ runner.os }}-sct-
@@ -111,7 +111,7 @@ jobs:
       - name: Restore cached SCT installation
         uses: actions/cache@v4
         with:
-          path: contrast-agnostic-softseg-spinalcord/spinalcordtoolbox
+          path: spinalcordtoolbox
           key: ${{ runner.os }}-sct-${{ hashFiles('spinalcordtoolbox/.ci.sh') }}
           restore-keys: |
             ${{ runner.os }}-sct-
@@ -129,6 +129,9 @@ jobs:
           git checkout nk/add-post-training-script-to-compute-csa
           # move dataset inside the repo
           cp -r ../csa-analysis .
+          # add SCT commands to path
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
           tree . -L 2
           # define list of 4 subjects
           subjects=("sub-barcelona06" "sub-beijingPrisma01" "sub-beijingPrisma02" "sub-brnoCeitec04")
