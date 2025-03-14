@@ -98,7 +98,6 @@ jobs:
           git checkout nk/add-post-training-script-to-compute-csa
           # move dataset inside the repo
           cp -r ../csa-analysis .
-          rm -r ../csa-analysis          # define list of 4 subjects
           # define list of 4 subjects
           subjects=("sub-barcelona06" "sub-beijingPrisma01" "sub-beijingPrisma02" "sub-brnoCeitec04")
           # print the contents of the current working directory
@@ -154,7 +153,7 @@ jobs:
           git checkout nk/add-post-training-script-to-compute-csa
           # move dataset inside the repo
           cp -r ../csa-analysis .
-          rm -r ../csa-analysis          # define list of 4 subjects
+          # define list of 4 subjects
           subjects=("sub-brnoUhb01" "sub-cardiff03" "sub-cmrra02" "sub-cmrra05")
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
