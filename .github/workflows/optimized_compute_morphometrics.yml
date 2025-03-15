@@ -1,0 +1,166 @@
+
+name: (Optimized) Compute morphometrics
+
+on:
+  push:
+    branches:
+      - nk/test-workflow
+  # release:
+  #   types: [published]
+
+jobs:
+  download_dataset:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      - name: Install git-annex
+        uses: jstritch/setup-git-annex@v1
+          
+      - name: Configure git
+        run: |
+            git config --global user.email "actions@github.com"
+            git config --global user.name "GitHub Actions"
+
+      - name: Download test data
+        run: |
+            git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+            # change current working directory
+            cd ${PWD}/contrast-agnostic-softseg-spinalcord
+            # checkout to the branch
+            git checkout nk/add-post-training-script-to-compute-csa
+            # run script
+            chmod +x scripts/download_spine_generic_test_data.sh
+            source scripts/download_spine_generic_test_data.sh
+
+      - name: Cache dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+  compute_csa:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+    strategy:
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        include:
+          - batch: 1
+            subjects: "sub-barcelona06 sub-beijingPrisma01 sub-beijingPrisma02 sub-brnoCeitec04"
+          - batch: 2
+            subjects: "sub-brnoUhb01 sub-cardiff03 sub-cmrra02 sub-cmrra05"
+          - batch: 3
+            subjects: "sub-cmrrb01 sub-cmrrb03 sub-cmrrb05 sub-fslAchieva04"
+          - batch: 4
+            subjects: "sub-fslPrisma01 sub-fslPrisma02 sub-fslPrisma04 sub-fslPrisma05"
+          - batch: 5
+            subjects: "sub-geneva03 sub-juntendo750w01 sub-juntendo750w02 sub-juntendo750w03"
+          - batch: 6
+            subjects: "sub-juntendo750w06 sub-milan03 sub-mniS03 sub-mountSinai01"
+          - batch: 7
+            subjects: "sub-nottwil01 sub-nottwil04 sub-nwu01 sub-oxfordFmrib06"
+          - batch: 8
+            subjects: "sub-oxfordFmrib09 sub-oxfordFmrib10 sub-oxfordOhba01 sub-oxfordOhba05"
+          - batch: 9
+            subjects: "sub-pavia02 sub-pavia05 sub-queensland01 sub-sherbrooke02"
+          - batch: 10
+            subjects: "sub-sherbrooke05 sub-sherbrooke06 sub-stanford04 sub-strasbourg04"
+          - batch: 11
+            subjects: "sub-tehranS03 sub-tokyoIngenia05 sub-ubc06 sub-ucl02"
+          - batch: 12
+            subjects: "sub-unf04 sub-vuiisAchieva04 sub-vuiisIngenia03 sub-vuiisIngenia04 sub-vuiisIngenia05"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      - name: Install SCT
+        run: |
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${{ matrix.subjects }}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-${{ matrix.batch }}
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  download_results:
+    runs-on: ubuntu-latest
+    needs: compute_csa
+
+    steps:
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas argparse
+      
+      - name: Download batch processing results
+        uses: actions/download-artifact@v4
+      
+      - name: Merge batch processing results
+        run: |
+          mkdir batch_csa_results
+          mv csa-results-* batch_csa_results
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # run script to merge individual csvs
+          chmod +x scripts/merge_run_batch_results.sh
+          source scripts/merge_run_batch_results.sh ../batch_csa_results .
+
+      - name: Upload merged CSV
+        uses: actions/upload-artifact@v4
+        with:
+            name: csa-results-merged
+            path: contrast-agnostic-softseg-spinalcord/csa_c2c3_merged.csv
