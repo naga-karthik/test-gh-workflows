@@ -1,5 +1,4 @@
-
-name: (Optimized) Compute morphometrics
+name: Compute morphometrics on spine-generic
 
 on:
   push:
@@ -53,32 +52,40 @@ jobs:
     needs: download_dataset
     strategy:
       matrix:
-        batch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        batch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
         include:
           - batch: 1
-            subjects: "sub-barcelona06 sub-beijingPrisma01 sub-beijingPrisma02 sub-brnoCeitec04"
+            subjects: "sub-barcelona06 sub-beijingPrisma01 sub-beijingPrisma02"
           - batch: 2
-            subjects: "sub-brnoUhb01 sub-cardiff03 sub-cmrra02 sub-cmrra05"
+            subjects: "sub-brnoCeitec04 sub-brnoUhb01 sub-cardiff03"
           - batch: 3
-            subjects: "sub-cmrrb01 sub-cmrrb03 sub-cmrrb05 sub-fslAchieva04"
+            subjects: "sub-cmrra02 sub-cmrra05 sub-cmrrb01"
           - batch: 4
-            subjects: "sub-fslPrisma01 sub-fslPrisma02 sub-fslPrisma04 sub-fslPrisma05"
+            subjects: "sub-cmrrb03 sub-cmrrb05 sub-fslAchieva04"
           - batch: 5
-            subjects: "sub-geneva03 sub-juntendo750w01 sub-juntendo750w02 sub-juntendo750w03"
+            subjects: "sub-fslPrisma01 sub-fslPrisma02 sub-fslPrisma04"
           - batch: 6
-            subjects: "sub-juntendo750w06 sub-milan03 sub-mniS03 sub-mountSinai01"
+            subjects: "sub-fslPrisma05 sub-geneva03 sub-juntendo750w01"
           - batch: 7
-            subjects: "sub-nottwil01 sub-nottwil04 sub-nwu01 sub-oxfordFmrib06"
+            subjects: "sub-juntendo750w02 sub-juntendo750w03 sub-juntendo750w06"
           - batch: 8
-            subjects: "sub-oxfordFmrib09 sub-oxfordFmrib10 sub-oxfordOhba01 sub-oxfordOhba05"
+            subjects: "sub-milan03 sub-mniS03 sub-mountSinai01"
           - batch: 9
-            subjects: "sub-pavia02 sub-pavia05 sub-queensland01 sub-sherbrooke02"
+            subjects: "sub-nottwil01 sub-nottwil04 sub-nwu01"
           - batch: 10
-            subjects: "sub-sherbrooke05 sub-sherbrooke06 sub-stanford04 sub-strasbourg04"
+            subjects: "sub-oxfordFmrib06 sub-oxfordFmrib09 sub-oxfordFmrib10"
           - batch: 11
-            subjects: "sub-tehranS03 sub-tokyoIngenia05 sub-ubc06 sub-ucl02"
+            subjects: "sub-oxfordOhba01 sub-oxfordOhba05 sub-pavia02"
           - batch: 12
-            subjects: "sub-unf04 sub-vuiisAchieva04 sub-vuiisIngenia03 sub-vuiisIngenia04 sub-vuiisIngenia05"
+            subjects: "sub-pavia05 sub-queensland01 sub-sherbrooke02"
+          - batch: 13
+            subjects: "sub-sherbrooke05 sub-sherbrooke06 sub-stanford04"
+          - batch: 14
+            subjects: "sub-strasbourg04 sub-tehranS03 sub-tokyoIngenia05"
+          - batch: 15
+            subjects: "sub-ubc06 sub-ucl02 sub-unf04"
+          - batch: 16
+            subjects: "sub-vuiisAchieva04 sub-vuiisIngenia03 sub-vuiisIngenia04 sub-vuiisIngenia05"
 
     steps:
       - name: Checkout repository
