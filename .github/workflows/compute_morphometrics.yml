@@ -235,6 +235,7 @@ jobs:
           cd ${PWD}/contrast-agnostic-softseg-spinalcord
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
+          tree . -L 2
           # run script to merge individual csvs
           python scripts/merge_csvs.py -path-results ../batch_csa_results -path-output .
 
