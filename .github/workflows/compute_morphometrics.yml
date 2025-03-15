@@ -48,29 +48,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-data-multi-subject-
 
-      # # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
-      # - name: Install SCT
-      #   run: |
-      #     git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
-      #     echo $PWD
-      #     ls -la
-      #     cd spinalcordtoolbox
-      #     ./.ci.sh -i
-      #     # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
-      #     # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
-      #     # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
-      #     cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
-      #     cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
-        
-      # - name: Cache SCT installation
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: spinalcordtoolbox
-      #     key: ${{ runner.os }}-sct-${{ hashFiles('spinalcordtoolbox/.ci.sh') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-sct-
-
-
   compute_csa_batch_1:
     runs-on: ubuntu-latest
     needs: download_dataset
@@ -96,9 +73,6 @@ jobs:
           # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
-
-      # - name: Check SCT dependencies
-      #   run: sct_check_dependencies
 
       - name: Restore cached dataset
         uses: actions/cache@v4
@@ -167,9 +141,6 @@ jobs:
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      # # - name: Check SCT dependencies
-      # #   run: sct_check_dependencies
-
       - name: Restore cached dataset
         uses: actions/cache@v4
         with:
@@ -202,9 +173,593 @@ jobs:
           name: csa-results-batch-2
           path: contrast-agnostic-softseg-spinalcord/logs_results
 
+  compute_csa_batch_3:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-cmrrb01" "sub-cmrrb03" "sub-cmrrb05" "sub-fslAchieva04")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-3
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_4:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-fslPrisma01" "sub-fslPrisma02" "sub-fslPrisma04" "sub-fslPrisma05")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-4
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_5:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-geneva03" "sub-juntendo750w01" "sub-juntendo750w02" "sub-juntendo750w03")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-5
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_6:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-juntendo750w06" "sub-milan03" "sub-mniS03" "sub-mountSinai01")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-6
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_7:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-nottwil01" "sub-nottwil04" "sub-nwu01" "sub-oxfordFmrib06")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-7
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_8:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-oxfordFmrib09" "sub-oxfordFmrib10" "sub-oxfordOhba01" "sub-oxfordOhba05")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-8
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+        
+  compute_csa_batch_9:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-pavia02" "sub-pavia05" "sub-queensland01" "sub-sherbrooke02")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-9
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_10:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-sherbrooke05" "sub-sherbrooke06" "sub-stanford04" "sub-strasbourg04")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-10
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_11:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-tehranS03" "sub-tokyoIngenia05" "sub-ubc06" "sub-ucl02")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-11
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+
+  compute_csa_batch_12:
+    runs-on: ubuntu-latest
+    needs: download_dataset
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
+      - name: Install SCT
+        run: |
+          # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
+          git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+          cd spinalcordtoolbox
+          ./.ci.sh -i
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+
+      - name: Restore cached dataset
+        uses: actions/cache@v4
+        with:
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-data-multi-subject-
+
+      - name: Run morphometric analysis
+        shell: bash -el {0}  # Ensures the Conda environment is properly loaded
+        run: |
+          mv contrast-agnostic-softseg-spinalcord csa-analysis
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+          # move dataset inside the repo
+          cp -r ../csa-analysis .
+          # define list of 4 subjects
+          subjects=("sub-unf04" "sub-vuiisAchieva04" "sub-vuiisIngenia03" "sub-vuiisIngenia04" "sub-vuiisIngenia05")
+          # run script
+          chmod +x scripts/compute_morphometrics_spine_generic.sh
+          source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
+
+      - name: Upload batch processing results
+        uses: actions/upload-artifact@v4
+        with:
+          name: csa-results-batch-12
+          path: contrast-agnostic-softseg-spinalcord/logs_results
+        
   download_results:
     runs-on: ubuntu-latest
-    needs: [compute_csa_batch_1, compute_csa_batch_2]
+    needs: [
+      compute_csa_batch_1, compute_csa_batch_2, compute_csa_batch_3, compute_csa_batch_4,
+      compute_csa_batch_5, compute_csa_batch_6, compute_csa_batch_7, compute_csa_batch_8,
+      compute_csa_batch_9, compute_csa_batch_10, compute_csa_batch_11, compute_csa_batch_12
+    ]
 
     steps:
       - name: Install Python 3
@@ -243,63 +798,3 @@ jobs:
         with:
             name: csa-results-merged
             path: contrast-agnostic-softseg-spinalcord/csa_c2c3_merged.csv
-
-  #   steps:
-  #     -name: Download all artifacts
-  # compute_csa_batch_3:
-  #   runs-on: ubuntu-latest
-  #   needs: download_dataset
-
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Install Python 3
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: 3.9.16
-
-  #     # https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/.ci.sh
-  #     - name: Install SCT
-  #       run: |
-  #         # source python/etc/profile.d/conda.sh >> $GITHUB_ENV
-  #         git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
-  #         cd spinalcordtoolbox
-  #         ./.ci.sh -i
-  #         # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
-  #         # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
-  #         # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
-  #         cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
-  #         cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
-
-  #     - name: Restore cached dataset
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: contrast-agnostic-softseg-spinalcord/data-multi-subject
-  #         key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
-  #         restore-keys: |
-  #           ${{ runner.os }}-data-multi-subject-
-
-  #     - name: Run morphometric analysis
-  #       shell: bash -el {0}  # Ensures the Conda environment is properly loaded
-  #       run: |
-  #         mv contrast-agnostic-softseg-spinalcord csa-analysis
-  #         # clone the repo
-  #         git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
-  #         # change current working directory
-  #         cd ${PWD}/contrast-agnostic-softseg-spinalcord
-  #         # checkout to the branch
-  #         git checkout nk/add-post-training-script-to-compute-csa
-  #         # move dataset inside the repo
-  #         cp -r ../csa-analysis .
-  #         # define list of 4 subjects
-  #         subjects=("sub-cmrrb01" "sub-cmrrb03" "sub-cmrrb05" "sub-fslAchieva04")
-  #         # run script
-  #         chmod +x scripts/compute_morphometrics_spine_generic.sh
-  #         source scripts/compute_morphometrics_spine_generic.sh "${subjects[*]}"
-
-  #     - name: Upload batch processing results
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: csa-results-batch-3
-  #         path: contrast-agnostic-softseg-spinalcord/logs_results
