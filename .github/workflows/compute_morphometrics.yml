@@ -228,6 +228,7 @@ jobs:
           ls -la
           mkdir batch_csa_results
           mv csa-results-* batch_csa_results
+          ls batch_csa_results
           # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
