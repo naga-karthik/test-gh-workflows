@@ -2,7 +2,7 @@ name: (Optimized) Morphometric Analysis
 
 on:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   download_dataset:
