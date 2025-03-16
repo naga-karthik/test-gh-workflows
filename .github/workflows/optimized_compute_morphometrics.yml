@@ -1,11 +1,8 @@
-name: Compute morphometrics on spine-generic
+name: (Optimized) Morphometric Analysis
 
 on:
-  push:
-    branches:
-      - nk/test-workflow
-  # release:
-  #   types: [published]
+  release:
+    types: [created]
 
 jobs:
   download_dataset:
@@ -28,6 +25,41 @@ jobs:
             git config --global user.email "actions@github.com"
             git config --global user.name "GitHub Actions"
 
+      - name: Download model from release
+        id: download_model
+        run: |
+          # Get the release details from the GitHub event
+          RELEASE_ID=${{ github.event.release.id }}
+          REPOSITORY="${{ github.repository }}"
+          
+          # List all assets for this release
+          ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
+          ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" $ASSETS_URL)
+          
+          # Create a directory for the model
+          mkdir -p models
+          
+          # Find the model asset - adjust the model filename pattern as needed
+          MODEL_ASSET_ID=$(echo $ASSETS | jq -r '.[] | select(.name | test("model*.zip")) | .id')
+          MODEL_NAME=$(echo $ASSETS | jq -r '.[] | select(.name | test("model*.zip")) | .name')
+          
+          if [ -z "$MODEL_ASSET_ID" ]; then
+            echo "No model asset found in the release"
+            exit 1
+          fi
+          
+          # Download the model
+          echo "Downloading model: $MODEL_NAME (ID: $MODEL_ASSET_ID)"
+          curl -L \
+            -H "Accept: application/octet-stream" \
+            -H "Authorization: token ${{ github.token }}" \
+            "https://api.github.com/repos/$REPOSITORY/releases/assets/$MODEL_ASSET_ID" \
+            -o "models/$MODEL_NAME"
+          
+          # Set outputs for use in later steps
+          echo "model_path=models/$MODEL_NAME" >> $GITHUB_OUTPUT
+          echo "Model downloaded to: models/$MODEL_NAME"
+
       - name: Download test data
         run: |
             git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
@@ -39,13 +71,15 @@ jobs:
             chmod +x scripts/download_spine_generic_test_data.sh
             source scripts/download_spine_generic_test_data.sh
 
-      - name: Cache dataset
+      - name: Cache dataset and model
         uses: actions/cache@v4
         with:
-          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
-          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          path: |
+            contrast-agnostic-softseg-spinalcord/data-multi-subject
+            models
+          key: ${{ runner.os }}-data-model-${{ github.event.release.id }}
           restore-keys: |
-            ${{ runner.os }}-data-multi-subject-
+            ${{ runner.os }}-data-model-
 
   compute_csa:
     runs-on: ubuntu-latest
@@ -56,36 +90,36 @@ jobs:
         include:
           - batch: 1
             subjects: "sub-barcelona06 sub-beijingPrisma01 sub-beijingPrisma02"
-          - batch: 2
-            subjects: "sub-brnoCeitec04 sub-brnoUhb01 sub-cardiff03"
-          - batch: 3
-            subjects: "sub-cmrra02 sub-cmrra05 sub-cmrrb01"
-          - batch: 4
-            subjects: "sub-cmrrb03 sub-cmrrb05 sub-fslAchieva04"
-          - batch: 5
-            subjects: "sub-fslPrisma01 sub-fslPrisma02 sub-fslPrisma04"
-          - batch: 6
-            subjects: "sub-fslPrisma05 sub-geneva03 sub-juntendo750w01"
-          - batch: 7
-            subjects: "sub-juntendo750w02 sub-juntendo750w03 sub-juntendo750w06"
-          - batch: 8
-            subjects: "sub-milan03 sub-mniS03 sub-mountSinai01"
-          - batch: 9
-            subjects: "sub-nottwil01 sub-nottwil04 sub-nwu01"
-          - batch: 10
-            subjects: "sub-oxfordFmrib06 sub-oxfordFmrib09 sub-oxfordFmrib10"
-          - batch: 11
-            subjects: "sub-oxfordOhba01 sub-oxfordOhba05 sub-pavia02"
-          - batch: 12
-            subjects: "sub-pavia05 sub-queensland01 sub-sherbrooke02"
-          - batch: 13
-            subjects: "sub-sherbrooke05 sub-sherbrooke06 sub-stanford04"
-          - batch: 14
-            subjects: "sub-strasbourg04 sub-tehranS03 sub-tokyoIngenia05"
-          - batch: 15
-            subjects: "sub-ubc06 sub-ucl02 sub-unf04"
-          - batch: 16
-            subjects: "sub-vuiisAchieva04 sub-vuiisIngenia03 sub-vuiisIngenia04 sub-vuiisIngenia05"
+          # - batch: 2
+          #   subjects: "sub-brnoCeitec04 sub-brnoUhb01 sub-cardiff03"
+          # - batch: 3
+          #   subjects: "sub-cmrra02 sub-cmrra05 sub-cmrrb01"
+          # - batch: 4
+          #   subjects: "sub-cmrrb03 sub-cmrrb05 sub-fslAchieva04"
+          # - batch: 5
+          #   subjects: "sub-fslPrisma01 sub-fslPrisma02 sub-fslPrisma04"
+          # - batch: 6
+          #   subjects: "sub-fslPrisma05 sub-geneva03 sub-juntendo750w01"
+          # - batch: 7
+          #   subjects: "sub-juntendo750w02 sub-juntendo750w03 sub-juntendo750w06"
+          # - batch: 8
+          #   subjects: "sub-milan03 sub-mniS03 sub-mountSinai01"
+          # - batch: 9
+          #   subjects: "sub-nottwil01 sub-nottwil04 sub-nwu01"
+          # - batch: 10
+          #   subjects: "sub-oxfordFmrib06 sub-oxfordFmrib09 sub-oxfordFmrib10"
+          # - batch: 11
+          #   subjects: "sub-oxfordOhba01 sub-oxfordOhba05 sub-pavia02"
+          # - batch: 12
+          #   subjects: "sub-pavia05 sub-queensland01 sub-sherbrooke02"
+          # - batch: 13
+          #   subjects: "sub-sherbrooke05 sub-sherbrooke06 sub-stanford04"
+          # - batch: 14
+          #   subjects: "sub-strasbourg04 sub-tehranS03 sub-tokyoIngenia05"
+          # - batch: 15
+          #   subjects: "sub-ubc06 sub-ucl02 sub-unf04"
+          # - batch: 16
+          #   subjects: "sub-vuiisAchieva04 sub-vuiisIngenia03 sub-vuiisIngenia04 sub-vuiisIngenia05"
 
     steps:
       - name: Checkout repository
@@ -104,13 +138,15 @@ jobs:
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      - name: Restore cached dataset
+      - name: Restore cached dataset and model
         uses: actions/cache@v4
         with:
-          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
-          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
+          path: |
+            contrast-agnostic-softseg-spinalcord/data-multi-subject
+            models
+          key: ${{ runner.os }}-data-model-${{ github.event.release.id }}
           restore-keys: |
-            ${{ runner.os }}-data-multi-subject-
+            ${{ runner.os }}-data-model-
 
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
@@ -122,11 +158,21 @@ jobs:
           cd ${PWD}/contrast-agnostic-softseg-spinalcord
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
+
           # move dataset inside the repo
           cp -r ../csa-analysis .
+          # copy the model to the appropriate directory
+          mkdir -p models
+          cp -r ../models/* models/
+          
+          # Pass model path to the script as an environment variable or parameter
+          # (depends on how your script accepts the model path)
+          export MODEL_PATH=$(find ../models -name "model*.zip" | head -n 1)
+          echo "Using model: $MODEL_PATH"
+          
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
-          source scripts/compute_morphometrics_spine_generic.sh "${{ matrix.subjects }}"
+          source scripts/compute_morphometrics_spine_generic.sh "${{ matrix.subjects }}" "$MODEL_PATH"
 
       - name: Upload batch processing results
         uses: actions/upload-artifact@v4
