@@ -34,7 +34,6 @@ jobs:
           
           # List all assets for this release
           ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
-          echo "token ${{ github.token }}"
           ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" -H "Content-Encoding: gzip" $ASSETS_URL)
           echo $ASSETS
           
@@ -42,8 +41,8 @@ jobs:
           mkdir -p models
           
           # Find the model asset - adjust the model filename pattern as needed
-          MODEL_ASSET_ID=$(echo $ASSETS | jq -r '.[] | select(.name | test("model*.zip")) | .id')
-          MODEL_NAME=$(echo $ASSETS | jq -r '.[] | select(.name | test("model*.zip")) | .name')
+          MODEL_ASSET_ID=$(echo "$ASSETS" | jq -r '.[] | select(.name | test("model*.zip")) | .id')
+          MODEL_NAME=$(echo "$ASSETS" | jq -r '.[] | select(.name | test("model*.zip")) | .name')
 
           echo "Model Asset ID: $MODEL_ASSET_ID"
           echo "Model Name: $MODEL_NAME"
