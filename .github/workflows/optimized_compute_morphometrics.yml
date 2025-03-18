@@ -40,10 +40,10 @@ jobs:
           # Create a directory for the model
           mkdir -p models
           
-          # Find the model asset - adjust the model filename pattern as needed
-          MODEL_ASSET_ID=$(echo "$ASSETS" | jq -r '.[] | select(.name | test("model*.zip")) | .id')
-          MODEL_NAME=$(echo "$ASSETS" | jq -r '.[] | select(.name | test("model*.zip")) | .name')
-
+          # Find the model asset - fix: improve regex pattern matching
+          MODEL_ASSET_ID=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .id')
+          MODEL_NAME=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .name')
+      
           echo "Model Asset ID: $MODEL_ASSET_ID"
           echo "Model Name: $MODEL_NAME"
           
