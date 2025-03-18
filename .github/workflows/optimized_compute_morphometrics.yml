@@ -34,7 +34,9 @@ jobs:
           
           # List all assets for this release
           ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
+          echo "token ${{ github.token }}"
           ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" $ASSETS_URL)
+          echo $ASSETS
           
           # Create a directory for the model
           mkdir -p models
