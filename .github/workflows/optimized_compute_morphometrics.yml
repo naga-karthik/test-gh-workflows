@@ -25,44 +25,46 @@ jobs:
             git config --global user.email "actions@github.com"
             git config --global user.name "GitHub Actions"
 
-      - name: Download model from release
-        id: download_model
-        run: |
-          # Get the release details from the GitHub event
-          RELEASE_ID=${{ github.event.release.id }}
-          REPOSITORY="${{ github.repository }}"
+      # - name: Download model from release
+      #   id: download_model
+      #   run: |
+      #     # Get the release details from the GitHub event
+      #     RELEASE_ID=${{ github.event.release.id }}
+      #     REPOSITORY="${{ github.repository }}"
           
-          # List all assets for this release
-          ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
-          ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" -H "Content-Encoding: gzip" $ASSETS_URL)
-          echo $ASSETS
+      #     # List all assets for this release
+      #     ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
+      #     ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" -H "Content-Encoding: gzip" $ASSETS_URL)
+      #     echo $ASSETS
           
-          # Create a directory for the model
-          mkdir -p models
+      #     # Create a directory for the model
+      #     mkdir -p models
           
-          # Find the model asset - fix: improve regex pattern matching
-          MODEL_ASSET_ID=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .id')
-          MODEL_NAME=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .name')
+      #     # Find the model asset - fix: improve regex pattern matching
+      #     MODEL_ASSET_ID=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .id')
+      #     MODEL_NAME=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .name')
+      #     MODEL_URL=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .browser_download_url')
+      #     echo "Model URL: $MODEL_URL"
       
-          echo "Model Asset ID: $MODEL_ASSET_ID"
-          echo "Model Name: $MODEL_NAME"
+      #     echo "Model Asset ID: $MODEL_ASSET_ID"
+      #     echo "Model Name: $MODEL_NAME"
           
-          if [ -z "$MODEL_ASSET_ID" ]; then
-            echo "No model asset found in the release"
-            exit 1
-          fi
+      #     if [ -z "$MODEL_ASSET_ID" ]; then
+      #       echo "No model asset found in the release"
+      #       exit 1
+      #     fi
           
-          # Download the model
-          echo "Downloading model: $MODEL_NAME (ID: $MODEL_ASSET_ID)"
-          curl -L \
-            -H "Accept: application/octet-stream" \
-            -H "Authorization: token ${{ github.token }}" \
-            "https://api.github.com/repos/$REPOSITORY/releases/assets/$MODEL_ASSET_ID" \
-            -o "models/$MODEL_NAME"
+      #     # Download the model
+      #     echo "Downloading model: $MODEL_NAME (ID: $MODEL_ASSET_ID)"
+      #     curl -L \
+      #       -H "Accept: application/octet-stream" \
+      #       -H "Authorization: token ${{ github.token }}" \
+      #       "https://api.github.com/repos/$REPOSITORY/releases/assets/$MODEL_ASSET_ID" \
+      #       -o "models/$MODEL_NAME"
           
-          # Set outputs for use in later steps
-          echo "model_path=models/$MODEL_NAME" >> $GITHUB_OUTPUT
-          echo "Model downloaded to: models/$MODEL_NAME"
+      #     # Set outputs for use in later steps
+      #     echo "model_path=models/$MODEL_NAME" >> $GITHUB_OUTPUT
+      #     echo "Model downloaded to: models/$MODEL_NAME"
 
       - name: Download test data
         run: |
@@ -75,15 +77,15 @@ jobs:
             chmod +x scripts/download_spine_generic_test_data.sh
             source scripts/download_spine_generic_test_data.sh
 
-      - name: Cache dataset and model
+      - name: Cache dataset
         uses: actions/cache@v4
         with:
           path: |
             contrast-agnostic-softseg-spinalcord/data-multi-subject
             models
-          key: ${{ runner.os }}-data-model-${{ github.event.release.id }}
+          key: ${{ runner.os }}-data-${{ github.event.release.id }}
           restore-keys: |
-            ${{ runner.os }}-data-model-
+            ${{ runner.os }}-data-
 
   compute_csa:
     runs-on: ubuntu-latest
@@ -142,15 +144,14 @@ jobs:
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      - name: Restore cached dataset and model
+      - name: Restore cached dataset
         uses: actions/cache@v4
         with:
           path: |
             contrast-agnostic-softseg-spinalcord/data-multi-subject
-            models
-          key: ${{ runner.os }}-data-model-${{ github.event.release.id }}
+          key: ${{ runner.os }}-data-${{ github.event.release.id }}
           restore-keys: |
-            ${{ runner.os }}-data-model-
+            ${{ runner.os }}-data-
 
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
@@ -165,18 +166,31 @@ jobs:
 
           # move dataset inside the repo
           cp -r ../csa-analysis .
-          # copy the model to the appropriate directory
-          mkdir -p models
-          cp -r ../models/* models/
+          # # copy the model to the appropriate directory
+          # mkdir -p models
+          # cp -r ../models/* models/
           
-          # Pass model path to the script as an environment variable or parameter
-          # (depends on how your script accepts the model path)
-          export MODEL_PATH=$(find ../models -name "model*.zip" | head -n 1)
-          echo "Using model: $MODEL_PATH"
+          # # Pass model path to the script as an environment variable or parameter
+          # # (depends on how your script accepts the model path)
+          # export MODEL_PATH=$(find ../models -name "model*.zip" | head -n 1)
+          # echo "Using model: $MODEL_PATH"
+
+          # Get the release details from the GitHub event
+          RELEASE_ID=${{ github.event.release.id }}
+          REPOSITORY="${{ github.repository }}"
           
+          # List all assets for this release
+          ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
+          ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" -H "Content-Encoding: gzip" $ASSETS_URL)
+          echo $ASSETS
+                    
+          # Find the model asset - fix: improve regex pattern matching
+          MODEL_URL=$(echo "$ASSETS" | jq -r '.[] | select(.name | contains("model") and endswith(".zip")) | .browser_download_url')
+          echo "Model URL: $MODEL_URL"
+
           # run script
           chmod +x scripts/compute_morphometrics_spine_generic.sh
-          source scripts/compute_morphometrics_spine_generic.sh "${{ matrix.subjects }}" "$MODEL_PATH"
+          source scripts/compute_morphometrics_spine_generic.sh "${{ matrix.subjects }}" "$MODEL_URL"
 
       - name: Upload batch processing results
         uses: actions/upload-artifact@v4
