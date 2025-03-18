@@ -80,12 +80,10 @@ jobs:
       - name: Cache dataset
         uses: actions/cache@v4
         with:
-          path: |
-            contrast-agnostic-softseg-spinalcord/data-multi-subject
-            models
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
           key: ${{ runner.os }}-data-${{ github.event.release.id }}
           restore-keys: |
-            ${{ runner.os }}-data-
+            ${{ runner.os }}-data-multi-subject-
 
   compute_csa:
     runs-on: ubuntu-latest
@@ -147,11 +145,10 @@ jobs:
       - name: Restore cached dataset
         uses: actions/cache@v4
         with:
-          path: |
-            contrast-agnostic-softseg-spinalcord/data-multi-subject
-          key: ${{ runner.os }}-data-${{ github.event.release.id }}
+          path: contrast-agnostic-softseg-spinalcord/data-multi-subject
+          key: ${{ runner.os }}-data-multi-subject-${{ github.event.release.id }}
           restore-keys: |
-            ${{ runner.os }}-data-
+            ${{ runner.os }}-data-multi-subject-
 
       - name: Run morphometric analysis
         shell: bash -el {0}  # Ensures the Conda environment is properly loaded
