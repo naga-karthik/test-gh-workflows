@@ -227,8 +227,15 @@ jobs:
           chmod +x scripts/merge_run_batch_results.sh
           source scripts/merge_run_batch_results.sh ../batch_csa_results .
 
-      - name: Upload merged CSV
+      - name: Upload merged CSV as a GHA artifact
         uses: actions/upload-artifact@v4
         with:
             name: csa-results-merged
             path: contrast-agnostic-softseg-spinalcord/csa_c2c3_merged.csv
+
+      - name: Upload merged CSV to current release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: contrast-agnostic-softseg-spinalcord/csa_c2c3_merged.csv
+            
