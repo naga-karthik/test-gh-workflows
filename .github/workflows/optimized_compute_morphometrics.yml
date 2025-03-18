@@ -81,7 +81,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: contrast-agnostic-softseg-spinalcord/data-multi-subject
-          key: ${{ runner.os }}-data-${{ github.event.release.id }}
+          key: ${{ runner.os }}-data-multi-subject-${{ github.event.release.id }}
           restore-keys: |
             ${{ runner.os }}-data-multi-subject-
 
