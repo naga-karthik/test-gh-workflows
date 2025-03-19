@@ -217,7 +217,7 @@ jobs:
           REPOSITORY="${{ github.repository }}"
           RELEASES_URL="https://api.github.com/repos/$REPOSITORY/releases"
           RELEASES=$(curl -s -H "Authorization: token ${{ github.token }}" $RELEASES_URL)
-          echo "$RELEASES"  # Added quotes
+          # echo "$RELEASES"  # Added quotes
 
           # loop through each release and find CSV assets
           echo "$RELEASES" | jq -c '.[]' | while read -r release; do
@@ -227,14 +227,13 @@ jobs:
             # list all assets for this release
             ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
             ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" -H "Content-Encoding: gzip" $ASSETS_URL)
-            echo "$ASSETS"  # Added quotes
+            # echo "$ASSETS"  # Added quotes
             
             # find CSV files
             CSV_URLS=$(echo "$ASSETS" | jq -r '.[] | select(.name | endswith(".csv")) | .browser_download_url')
             
             if [ -n "$CSV_URLS" ]; then
               echo "Found CSV file(s) for release $RELEASE_TAG:"
-              echo "$CSV_URLS"
               
               # download the CSV files into the folder
               echo "$CSV_URLS" | while read -r url; do
@@ -254,10 +253,6 @@ jobs:
           cd ${PWD}/contrast-agnostic-softseg-spinalcord
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
-
-          ls -la
-          cp -r ../csvs_model_releases .
-          ls
 
           # run script
           chmod +x scripts/generate_morphometrics_plots.sh
