@@ -1,4 +1,4 @@
-name: (Optimized) Morphometric Analysis
+name: Run Morphometric Analysis
 
 on:
   release:
@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: contrast-agnostic-softseg-spinalcord/data-multi-subject
-          key: ${{ runner.os }}-data-multi-subject-${{ github.event.release.id }}
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
           restore-keys: |
             ${{ runner.os }}-data-multi-subject-
 
@@ -105,7 +105,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: contrast-agnostic-softseg-spinalcord/data-multi-subject
-          key: ${{ runner.os }}-data-multi-subject-${{ github.event.release.id }}
+          key: ${{ runner.os }}-data-multi-subject-${{ hashFiles('contrast-agnostic-softseg-spinalcord/scripts/download_spine_generic_test_data.sh') }}
           restore-keys: |
             ${{ runner.os }}-data-multi-subject-
 
@@ -183,15 +183,10 @@ jobs:
           # rename the csv file to contain the model version
           mv csa_c2c3_merged.csv csa_c2c3__model_${{ github.event.release.tag_name }}.csv
 
-      - name: Upload merged CSV as a GHA artifact
-        uses: actions/upload-artifact@v4
-        with:
-            name: csa-results-merged
-            path: contrast-agnostic-softseg-spinalcord/csa_c2c3__model_${{ github.event.release.tag_name }}.csv
-
       - name: Upload merged CSV to current release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.release.tag_name }}
           files: contrast-agnostic-softseg-spinalcord/csa_c2c3__model_${{ github.event.release.tag_name }}.csv
-            
+
+# TODO: search assets of previous releases to find *.csv files, use them to plot the violins
