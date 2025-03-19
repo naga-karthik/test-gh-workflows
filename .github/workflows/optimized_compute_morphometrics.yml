@@ -210,13 +210,6 @@ jobs:
       - name: Generate morphometrics plots
         shell: bash -el {0}
         run: |
-          # clone the repo
-          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
-          # change current working directory
-          cd ${PWD}/contrast-agnostic-softseg-spinalcord
-          # checkout to the branch
-          git checkout nk/add-post-training-script-to-compute-csa
-
           # create new folder to store downloaded CSV files
           mkdir -p csvs_model_releases
           
@@ -225,9 +218,6 @@ jobs:
           RELEASES_URL="https://api.github.com/repos/$REPOSITORY/releases"
           RELEASES=$(curl -s -H "Authorization: token ${{ github.token }}" $RELEASES_URL)
           echo "$RELEASES"  # Added quotes
-
-          # Create output directory if it doesn't exist
-          mkdir -p csvs_model_releases
 
           # loop through each release and find CSV assets
           echo "$RELEASES" | jq -c '.[]' | while read -r release; do
@@ -257,6 +247,17 @@ jobs:
               echo "No CSV files found for release $RELEASE_TAG"
             fi
           done
+
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+
+          ls -la
+          cp -r ../csvs_model_releases .
+          ls
 
           # run script
           chmod +x scripts/generate_morphometrics_plots.sh
