@@ -223,11 +223,12 @@ jobs:
           # list all releases
           RELEASES_URL="https://api.github.com/repos/$REPOSITORY/releases"
           RELEASES=$(curl -s -H "Authorization: token ${{ github.token }}" $RELEASES_URL)
+          echo $RELEASES
           
           # loop through each release and find CSV assets
           echo "$RELEASES" | jq -c '.[]' | while read -r release; do
             RELEASE_ID=$(echo "$release" | jq -r '.id')
-            RELEASE_TAG=$(echo "$release" | jq -r '.tag_name')
+            RELEASE_TAG=${{ github.event.release.tag_name }}
 
             # list all assets for this release
             ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
