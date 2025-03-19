@@ -100,6 +100,8 @@ jobs:
           ./.ci.sh -i
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+          # checkout to my branch
+          git checkout nk/revert-monai-model-to-320
 
       - name: Restore cached dataset
         uses: actions/cache@v4
