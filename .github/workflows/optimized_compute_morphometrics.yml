@@ -124,9 +124,6 @@ jobs:
 
           # move dataset inside the repo
           cp -r ../csa-analysis .
-          # # copy the model to the appropriate directory
-          # mkdir -p models
-          # cp -r ../models/* models/
           
           # Get the release details from the GitHub event
           RELEASE_ID=${{ github.event.release.id }}
@@ -171,17 +168,22 @@ jobs:
       
       - name: Merge batch processing results
         run: |
+          # create a new folder to download all artifacts uploaded above
           mkdir batch_csa_results
+          # move all the files there
           mv csa-results-* batch_csa_results
+          
           # clone the repo
           git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
           # change current working directory
           cd ${PWD}/contrast-agnostic-softseg-spinalcord
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
+
           # run script to merge individual csvs
           chmod +x scripts/merge_run_batch_results.sh
           source scripts/merge_run_batch_results.sh ../batch_csa_results .
+
           # rename the csv file to contain the model version
           mv csa_c2c3_merged.csv csa_c2c3__model_${{ github.event.release.tag_name }}.csv
 
@@ -191,4 +193,71 @@ jobs:
           tag_name: ${{ github.event.release.tag_name }}
           files: contrast-agnostic-softseg-spinalcord/csa_c2c3__model_${{ github.event.release.tag_name }}.csv
 
-# TODO: search assets of previous releases to find *.csv files, use them to plot the violins
+  generate_plots: 
+    runs-on: ubuntu-latest
+    needs: download_results
+    steps:
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9.16
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas argparse seaborn matplotlib
+
+      - name: Generate morphometrics plots
+        shell: bash -el {0}
+        run: |
+          # clone the repo
+          git clone https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord.git
+          # change current working directory
+          cd ${PWD}/contrast-agnostic-softseg-spinalcord
+          # checkout to the branch
+          git checkout nk/add-post-training-script-to-compute-csa
+
+          # create new folder to store downloaded CSV files
+          mkdir -p csvs_model_releases
+          
+          # list all releases
+          RELEASES_URL="https://api.github.com/repos/$REPOSITORY/releases"
+          RELEASES=$(curl -s -H "Authorization: token ${{ github.token }}" $RELEASES_URL)
+          
+          # loop through each release and find CSV assets
+          echo "$RELEASES" | jq -c '.[]' | while read -r release; do
+            RELEASE_ID=$(echo "$release" | jq -r '.id')
+            RELEASE_TAG=$(echo "$release" | jq -r '.tag_name')
+
+            # list all assets for this release
+            ASSETS_URL="https://api.github.com/repos/$REPOSITORY/releases/$RELEASE_ID/assets"
+            ASSETS=$(curl -s -H "Authorization: token ${{ github.token }}" -H "Content-Encoding: gzip" $ASSETS_URL)
+            echo $ASSETS
+            
+            # find CSV files
+            CSV_URL=$(echo "$ASSETS" | jq -r '.[] | select(.name | endswith(".csv")) | .browser_download_url')
+            
+            if [ -n "$CSV_URLS" ]; then
+              echo "Found CSV file for release $RELEASE_TAG:"
+              echo "$CSV_URL"
+              
+              # download the CSV files into the folder
+              for url in $CSV_URLS; do
+                curl -L -H "Authorization: token ${{ github.token }}" -o "csvs_model_releases/$(basename $url)" "$url"
+              done
+            fi
+          done          
+
+          # run script
+          chmod +x scripts/generate_morphometrics_plots.sh
+          source scripts/generate_morphometrics_plots.sh csvs_model_releases
+
+          # create a zip file
+          zip -r morphometric_plots.zip csvs_model_releases
+
+      - name: Upload plots to the current release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: contrast-agnostic-softseg-spinalcord/morphometric_plots.zip
+  
