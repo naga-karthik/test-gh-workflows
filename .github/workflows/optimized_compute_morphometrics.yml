@@ -254,6 +254,9 @@ jobs:
           # checkout to the branch
           git checkout nk/add-post-training-script-to-compute-csa
 
+          # move the csvs folder inside the repo
+          cp -r ../csvs_model_releases .
+
           # run script
           chmod +x scripts/generate_morphometrics_plots.sh
           source scripts/generate_morphometrics_plots.sh csvs_model_releases
